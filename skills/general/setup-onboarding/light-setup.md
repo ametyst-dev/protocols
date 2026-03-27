@@ -141,42 +141,39 @@ gh repo clone ametyst-dev/protocols /tmp/ametyst-protocols
 If the clone fails (no access), tell the user:
 "Cannot access the protocols repo. Ask your admin to confirm you have access to the ametyst-dev GitHub org."
 
-Once cloned, read the repo structure to understand what's available:
-
-```bash
-find /tmp/ametyst-protocols -name "*.md" -not -path "*/.git/*"
-```
-
-Create the folder structure in the user's working directory:
+Once cloned, create the folder structure in the user's working directory:
 
 ```
 .claude/rules/
-.claude/rules/general-teamspace-communication/
 .claude/skills/
 .claude/agents/
 context/company-context/
 ```
 
-Copy files from the clone to local. **The teamspace subfolder (e.g. `general/`, `product/`) is NOT replicated locally — it's only for organization in the repo.** The mapping is:
+**Download `company-context`** and **`claude-template.md`** (always, from root):
+- `company-context/*` → `context/company-context/`
+- `claude-template.md` → `context/company-context/claude-template.md`
 
-1. **Company context** (`company-context/*` in the repo):
-   → Copy to `context/company-context/`
+**Only download `general`** — no other teamspaces. The teamspace subfolder is NOT replicated locally — it's only for organization in the repo. Copy files using this mapping:
 
-2. **Communication** (`rules/general/communication/*` in the repo):
-   → Copy to `.claude/rules/general-teamspace-communication/`
+1. **Communication** (`rules/<teamspace>/communication/*`):
+   → Copy to `.claude/rules/<teamspace>-teamspace-communication/`
    → **Skip** any file with `notion` in the name (notion-protocol.md, notion-schema.md) — this is light setup, no Notion.
 
-3. **Rules** (`rules/general/*` — non-folder files like `notion-content-rules.md`, `communication-routing.md`):
+2. **Rules** (`rules/<teamspace>/*` — non-folder files):
    → Copy to `.claude/rules/`
 
-4. **Skills** (`skills/general/*` in the repo — each subfolder or file is a skill):
+3. **Skills** (`skills/<teamspace>/*` — each subfolder or file is a skill):
    → Copy each subfolder to `.claude/skills/<name>/` (preserving internal structure)
    → For single .md files, create `.claude/skills/<name>/SKILL.md`
 
-5. **Agents** (`agents/general/*` in the repo):
+4. **Agents** (`agents/<teamspace>/*`):
    → Copy to `.claude/agents/`
 
-Tell the user which files were downloaded and where they were placed.
+5. **Guides** (`guides/<teamspace>/*`):
+   → Copy to `.claude/guides/`
+
+Tell the user which files were downloaded.
 
 Clean up:
 ```bash
@@ -263,7 +260,7 @@ Tell the user their self-context has been created.
 
 ### Step 8 — Generate CLAUDE.md
 
-Check if `context/company-context/CLAUDE-TEMPLATE.md` exists (it should have been downloaded in Step 5).
+Check if `context/company-context/claude-template.md` exists (it should have been downloaded in Step 5 from the repo root).
 
 If it exists, read it and use it as the base template, replacing:
 - `<Name>` with the user's name
@@ -325,7 +322,13 @@ Setup complete — company context and communication loaded.
 
 Before posting, show the user the message and ask for confirmation.
 
-Then tell the user everything that was set up:
+Then **dynamically discover** what was installed by scanning the local file system:
+
+1. **Skills** — list all folders in `.claude/skills/`. For each, read the skill file (SKILL.md or the main .md) and extract the `description` from the frontmatter or first paragraph. Build a list of skill name + one-line description.
+2. **Agents** — list all files in `.claude/agents/`. For each, read the file and extract the description. Build a list of agent name + one-line description.
+3. **Guides** — list all files in `.claude/guides/` (if it exists). For each, read the title (first `#` heading). Build a list of guide name + one-line description.
+
+Present the full recap to the user:
 
 ```
 Light setup complete! Here's what was configured:
@@ -344,6 +347,17 @@ What you CAN do:
 - Access company context (who we are, what we build, competition)
 - Work with Cursor on code tasks
 - Collaborate with other agents via Slack
+
+Skills installed:
+<dynamically generated list — skill name + one-line description>
+
+Agents installed:
+<dynamically generated list — agent name + one-line description>
+(omit section if no agents were installed)
+
+Guides installed:
+<dynamically generated list — guide name + one-line description>
+(omit section if no guides were installed)
 
 What you CANNOT do yet (requires full setup):
 - Access Notion databases (OKRs, projects, tasks, docs)

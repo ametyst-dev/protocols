@@ -1,19 +1,19 @@
 ---
-description: Step-by-step onboarding skill that connects a new team member's agent to the Ametyst ecosystem. The admin has already created Slack and Notion apps — this skill guides the member through token configuration, MCP setup, protocol download, knowledge base sync, self-context creation, and CLAUDE.md generation. Use whenever a new person joins Ametyst and needs to set up their agent, or when someone says "set up agent", "onboard", "connect to Ametyst".
-allowed-tools: Read, Write, Edit, Glob, Bash, AskUserQuestion, mcp__notionApi__API-query-data-source, mcp__notionApi__API-get-block-children, mcp__notionApi__API-retrieve-a-page, mcp__slack__slack_post_message, mcp__slack__slack_get_channel_history
+description: Step-by-step onboarding skill that connects a new team member's agent to the Ametyst ecosystem. Configures Slack + Notion + protocols from GitHub + company context + self-context + CLAUDE.md. Supports upgrade from light setup. Use whenever a new person joins Ametyst and needs to set up their agent, or when someone says "set up agent", "onboard", "connect to Ametyst".
+allowed-tools: Read, Write, Edit, Glob, Bash(gh *), Bash(node *), Bash(npm *), AskUserQuestion, mcp__notionApi__API-query-data-source, mcp__notionApi__API-get-block-children, mcp__notionApi__API-retrieve-a-page, mcp__slack__slack_post_message, mcp__slack__slack_get_channel_history
 ---
 
 ## set-up-agent
 
 Guide a new team member through connecting their agent to the Ametyst ecosystem. Supports two paths:
-1. **Full setup (from scratch)** — configures Slack + Notion + protocols + context + CLAUDE.md
-2. **Upgrade from light setup** — the member already has Slack + GitHub protocols; this adds only Notion access
+1. **Full setup (from scratch)** — configures Slack + Notion + protocols from GitHub + context + CLAUDE.md
+2. **Upgrade from light setup** — the member already has Slack + GitHub protocols; this adds Notion access
 
 By the end, they have a fully configured working directory with protocols, company context, self-context, and a CLAUDE.md that keeps everything in sync.
 
-**Important:** This skill must run on **Claude Code** (CLI). The user's teamspace is **General** — do not ask which teamspace they belong to.
+**Important:** This skill must run on **Claude Code** (CLI).
 
-**Prerequisite:** The admin must have already created the Slack app and Notion integration for this member. See the admin onboarding guide at `areas/governance/workflows/how-to-onboard.md`.
+**Prerequisite:** The admin must have already created the Slack app and Notion integration for this member. See the admin onboarding guide at `areas/governance/workflows/admin-onboarding-guide.md`.
 
 ---
 
@@ -33,10 +33,6 @@ Use `AskUserQuestion` to ask the user:
 
 1. **Name** — their first name (used throughout the setup)
 2. **Working directory** — the root path of the repo/folder where the agent will operate. Default: current working directory.
-
-Do NOT ask for teamspace — it is always General.
-
-Tell the user: "Your teamspace is General."
 
 ---
 
@@ -162,18 +158,7 @@ Do NOT proceed until Slack is working.
 
 ---
 
-### Step 5 — Download protocols from GitHub (General only)
-
-Create the folder structure:
-
-```
-.claude/rules/
-.claude/rules/general-teamspace-communication/
-.claude/skills/
-.claude/agents/
-.claude/guides/
-context/company-context/
-```
+### Step 5 — Download protocols from GitHub
 
 Clone the shared protocols repo:
 
@@ -184,26 +169,36 @@ gh repo clone ametyst-dev/protocols /tmp/ametyst-protocols
 If the clone fails (no access), tell the user:
 "Cannot access the protocols repo. Ask your admin to confirm you have access to the ametyst-dev GitHub org."
 
-Copy files from the clone to local. **The teamspace subfolder (e.g. `general/`, `product/`) is NOT replicated locally — it's only for organization in the repo.** The mapping is:
+**Only download `general`** — no other teamspaces. Additional teamspaces can be added later via `/fetch-teamspace`.
 
+**Download `company-context`** and **`claude-template.md`** (always, from root):
 - `company-context/*` → `context/company-context/`
-- `rules/general/communication/*` → `.claude/rules/general-teamspace-communication/`
-- `rules/general/*` (non-folder files like `notion-content-rules.md`) → `.claude/rules/`
-- `skills/general/*` → `.claude/skills/<skill-name>/` (preserving internal structure)
-- `agents/general/*` → `.claude/agents/`
+- `claude-template.md` → `context/company-context/claude-template.md`
+
+Copy files using this mapping. **The teamspace subfolder is NOT replicated locally — it's only for organization in the repo:**
+
+- `rules/<teamspace>/communication/*` → `.claude/rules/<teamspace>-teamspace-communication/`
+- `rules/<teamspace>/*` (non-folder files) → `.claude/rules/`
+- `skills/<teamspace>/*` → `.claude/skills/<skill-name>/` (preserving internal structure)
+- `agents/<teamspace>/*` → `.claude/agents/`
+- `guides/<teamspace>/*` → `.claude/guides/`
+
+Create all necessary folders.
 
 Clean up:
 ```bash
 rm -rf /tmp/ametyst-protocols
 ```
 
-Tell the user which protocols, skills, and guides were downloaded.
+Tell the user which files were downloaded.
 
 ---
 
 ### Step 6 — Create communication-routing.md
 
-Create `.claude/rules/communication-routing.md` with this exact content:
+**Only create this file if it was NOT downloaded from GitHub in Step 5.** If `rules/general/communication-routing.md` was downloaded, it already exists at `.claude/rules/communication-routing.md` — skip this step.
+
+If it was not downloaded, create `.claude/rules/communication-routing.md` with this content:
 
 ```markdown
 # Communication Routing
@@ -226,13 +221,13 @@ All paths are relative to the project root.
 - Follow message formats exactly — no paraphrasing
 ```
 
-Tell the user that communication routing has been configured.
+If additional teamspaces were downloaded in Step 5, add their routing rows to the table (same format as in `set-fetch-teamspace`).
 
 ---
 
 ### Step 7 — Verify Knowledge Base
 
-The company context files were already downloaded in Step 5 (from `general/company-context/` in the GitHub repo). Verify they exist:
+The company context files were downloaded in Step 5 from `company-context/` in the GitHub repo. Verify they exist:
 
 ```bash
 ls context/company-context/
@@ -294,7 +289,7 @@ Tell the user their self-context has been created.
 
 ### Step 9 — Generate CLAUDE.md
 
-Check if `context/company-context/claude-template.md` exists (it should have been downloaded in Step 7 as part of the Knowledge Base).
+Check if `context/company-context/claude-template.md` exists (downloaded in Step 5 from the repo root).
 
 If it exists, read it and use it as the base template, replacing:
 - `<Name>` with the user's name
@@ -325,9 +320,9 @@ On the first message of every session:
 - `context/company-context/` — read-only Ametyst knowledge base; load only the specific files relevant to your task
 
 ## Operations supported
-- ✅ Do: reference `context/self-context/` to ground agent reasoning
-- ✅ Do: reference `context/company-context/` for Ametyst-specific context
-- ❌ Don't: modify `context/self-context/` or `context/company-context/` — both are read-only
+- Do: reference `context/self-context/` to ground agent reasoning
+- Do: reference `context/company-context/` for Ametyst-specific context
+- Don't: modify `context/self-context/` or `context/company-context/` — both are read-only
 
 ## Boundaries
 - `context/self-context/` and `context/company-context/` are **read-only** — never modify files there
@@ -348,32 +343,49 @@ Tell the user their CLAUDE.md has been generated.
 Post a welcome message to #general (channel ID `C0A9L8KDFEW`):
 
 ```
-:wave: *New agent online — <Name> (<Role>)*
+:wave: *New agent online — <Name>*
 Teamspace: General
 Setup complete — protocols, knowledge base, and context loaded.
 ```
 
 Before posting, show the user the message and ask for confirmation.
 
-Then tell the user everything that was set up:
+Then **dynamically discover** what was installed by scanning the local file system:
+
+1. **Skills** — list all folders in `.claude/skills/`. For each, read the skill file (SKILL.md or the main .md) and extract the `description` from the frontmatter or first paragraph. Build a list of skill name + one-line description.
+2. **Agents** — list all files in `.claude/agents/`. For each, read the file and extract the description. Build a list of agent name + one-line description.
+3. **Guides** — list all files in `.claude/guides/` (if it exists). For each, read the title (first `#` heading). Build a list of guide name + one-line description.
+
+Present the full recap to the user:
 
 ```
 Setup complete! Here's what was configured:
 
 - Tokens: Slack + Notion (provided by admin)
 - MCP servers: connected and verified
-- Protocols: <count> files downloaded
-- Skills: <count> downloaded
-- Agents: <count> downloaded
-- Communication routing: configured for General
-- Knowledge Base: <count> files synced to context/company-context/
+- Protocols: downloaded from GitHub (General teamspace)
+- Communication routing: configured
+- Knowledge Base: synced to context/company-context/
 - Self-context: <Name>.md created
 - CLAUDE.md: generated with startup routine
 - Welcome message: posted to #general
 
+Skills installed:
+<dynamically generated list — skill name + one-line description>
+
+Agents installed:
+<dynamically generated list — agent name + one-line description>
+(omit section if no agents were installed)
+
+Guides installed:
+<dynamically generated list — guide name + one-line description>
+(omit section if no guides were installed)
+
 Your agent is now connected to the Ametyst ecosystem.
 On every new session, it will automatically check for
 protocol updates and sync them.
+
+To add more teamspaces later, run /fetch-teamspace.
 ```
 
 ---
@@ -381,7 +393,7 @@ protocol updates and sync them.
 
 ## UPGRADE PATH — Step 2b (for users who already completed light setup)
 
-This section runs ONLY when the user answered "YES" in Step 0. They already have Slack, GitHub protocols, company context, self-context, and a CLAUDE.md from the light setup. This upgrade adds Notion access.
+This section runs ONLY when the user answered "YES" in Step 0. They already have Slack, GitHub protocols, company context, self-context, and a CLAUDE.md from the light setup. This upgrade adds Notion access and optionally downloads additional teamspaces.
 
 ---
 
@@ -394,7 +406,7 @@ Check that the light setup artifacts exist:
 - `context/self-context/` has at least one `.md` file
 - `context/company-context/` has at least one `.md` file
 
-If any are missing, tell the user: "Your light setup seems incomplete. Run `/light-setup-agent` first to complete it, then come back here."
+If any are missing, tell the user: "Your light setup seems incomplete. Run `/light-setup` first to complete it, then come back here."
 
 Extract the user's name from the self-context file (the filename without `.md`).
 
@@ -462,60 +474,22 @@ Do NOT proceed until Notion is working.
 
 ---
 
-### Step 2b-5 — Download Notion protocols
+### Step 2b-5 — Update communication-routing.md for Notion
 
-Download the full General protocols from Notion (same as Step 5 of the full setup):
+Read the existing `.claude/rules/communication-routing.md`. Ensure it includes Notion references:
 
-Query the General Protocols database:
-```json
-{ "data_source_id": "86503a95-04f3-4d76-9e9a-898b71006742" }
-```
+- The Rule section should mention "Notion API call" alongside "Slack message"
+- The Loading rules should include `notion-protocol.md` and `notion-schema.md`
 
-For each entry, get page content via `API-get-block-children`.
-
-Sort by Category and save:
-- **Communication** → `.claude/rules/general-teamspace-communication/` (this overwrites Slack-only files from light setup and adds notion-protocol.md and notion-schema.md)
-- **Skill** → `.claude/skills/<doc-name>/SKILL.md`
-- **Agent** → `.claude/agents/<doc-name>.md`
-- **Guide** → `.claude/guides/<doc-name>.md`
-- **Other** → `.claude/rules/<doc-name>.md`
-
-Tell the user which files were downloaded, highlighting what's NEW vs what was updated.
+If these are missing (light setup had Slack-only routing), update the file.
 
 ---
 
-### Step 2b-6 — Update communication-routing.md
-
-Read the existing `.claude/rules/communication-routing.md`. Update it to include Notion references:
-
-```markdown
-# Communication Routing
-
-## Rule
-Before any Slack message or Notion API call, read the relevant protocol files below.
-
-## Routing table
-
-| Context | Protocol files |
-|---|---|
-| #general, #standup, #news, Knowledge Base | `.claude/rules/general-teamspace-communication/` |
-
-All paths are relative to the project root.
-
-## Loading rules
-- Always load `notion-protocol.md` first (IDs, queries, write rules)
-- Load `notion-schema.md` only when creating or updating entries
-- Load `slack-protocol.md` before posting any message
-- Follow message formats exactly — no paraphrasing
-```
-
----
-
-### Step 2b-7 — Update CLAUDE.md
+### Step 2b-6 — Update CLAUDE.md
 
 Read the existing `.claude/CLAUDE.md`. Add or update:
 
-1. **Startup routine** — add:
+1. **Startup routine** — add if missing:
    ```
    ## Startup routine
    On the first message of every session:
@@ -532,7 +506,7 @@ Read the existing `.claude/CLAUDE.md`. Add or update:
 
 ---
 
-### Step 2b-8 — Confirm upgrade
+### Step 2b-7 — Confirm upgrade
 
 Post to #general (channel ID `C0A9L8KDFEW`):
 
@@ -543,17 +517,32 @@ Notion access added. Full setup complete.
 
 Before posting, show the user the message and ask for confirmation.
 
-Then tell the user:
+Then **dynamically discover** what is installed by scanning the local file system (same approach as Step 10):
+
+1. **Skills** — list all folders in `.claude/skills/`. For each, read the skill file and extract the description. Build a list of skill name + one-line description.
+2. **Agents** — list all files in `.claude/agents/`. For each, read and extract the description.
+3. **Guides** — list all files in `.claude/guides/` (if it exists). For each, read the title.
+
+Present the recap:
 
 ```
 Upgrade complete! What was added:
 
 - Notion: connected and verified
-- Protocols: full set downloaded from Notion (including notion-protocol, notion-schema)
-- Skills: Notion-dependent skills added (ops-sync-protocols, ops-fetch-teamspace)
 - Communication routing: updated with Notion references
 - CLAUDE.md: updated with Notion sync startup routine
 
+Skills installed:
+<dynamically generated list — skill name + one-line description>
+
+Agents installed:
+<dynamically generated list — agent name + one-line description>
+(omit section if no agents)
+
+Guides installed:
+<dynamically generated list — guide name + one-line description>
+(omit section if no guides)
+
 You now have full access to the Ametyst ecosystem.
-To add Strategy or Governance teamspaces, run /ops-fetch-teamspace.
+To add more teamspaces later, run /fetch-teamspace.
 ```
