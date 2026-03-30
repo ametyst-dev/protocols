@@ -104,12 +104,6 @@ Note: Key Results has additional Status option: **Failed**.
 | Description | rich_text | — |
 | Past due | formula | "Past Due" or "" |
 
-### Protocols
-| Property | Type | Options |
-|---|---|---|
-| Category | multi_select | Proposal, Customer research, Strategy doc, Planning |
-| Reviewers | people | — |
-
 ### Team Members
 | Property | Type | Options |
 |---|---|---|

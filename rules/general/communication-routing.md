@@ -8,8 +8,8 @@ Before any Slack message or Notion API call, read the relevant protocol files be
 | Context | Protocol files |
 |---|---|
 | #general, #standup, #news, Knowledge Base | `.claude/rules/general-teamspace-communication/` |
-| #governance, Governance databases (Objectives, KRs, Meetings, Projects, Tasks, Docs, Workflows, Protocols) | `.claude/rules/governance-teamspace-communication/` |
-| #strategy, Strategy databases (Objectives, KRs, Meetings, Projects, Tasks, Fundraising, Docs, Workflows, Protocols, Team Members) | `.claude/rules/strategy-teamspace-communication/` |
+| #governance, Governance databases (Objectives, KRs, Meetings, Projects, Tasks, Docs, Workflows) | `.claude/rules/governance-teamspace-communication/` |
+| #strategy, Strategy databases (Objectives, KRs, Meetings, Projects, Tasks, Fundraising, Docs, Workflows, Team Members) | `.claude/rules/strategy-teamspace-communication/` |
 | Sprint channels, engineering coordination | `.claude/skills/eng-sprint-planner/protocols/slack-protocol.md` |
 
 All paths are relative to the project root.

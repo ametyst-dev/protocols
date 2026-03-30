@@ -12,7 +12,6 @@
 
 ### #general (`C0A9L8KDFEW`)
 - Cross-team announcements that affect both Governance and Strategy
-- Protocol updates
 - Company-wide status updates
 
 ### #standup (`C0AJNMCSTT2`)
@@ -22,14 +21,6 @@
 - External news, market intel, competitor updates
 
 ## Message formats
-
-### #general — Protocols update
-```
-:books: *Protocols — [action]*
-Entry: [doc name]
-Category: [category]
-[Optional: summary of content]
-```
 
 ### #general — Cross-team announcement
 ```

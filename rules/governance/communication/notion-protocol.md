@@ -16,7 +16,7 @@
 | Tasks | `9d37ea98-f454-447b-9fc4-1e4cf535c023` | `23283c0a-6de9-4196-89b6-fa3fd2b50447` | Task name |
 | Docs | `9fc68281-a797-4e82-9f42-b41076749f9e` | `9bff4a2f-3af1-4a28-8d1a-5523745e561b` | Doc name |
 | Workflows | `216a9c3a-a3ba-491d-a980-fd8d155ded9f` | `95cf822a-764f-4047-a89c-585a7f625141` | Task name |
-| Protocols | `3260ea4e-0c32-4790-aeef-eca1b12060e6` | `356a5935-26dc-4b63-a442-04d4a138224d` | Doc name |
+
 
 ## Fetching
 
@@ -77,8 +77,6 @@ Use `API-post-page` with `database_id` as parent. Use `API-patch-page` to update
 | Tasks | Task name, Status | Priority, Team=Governance, Due date, Projects |
 | Docs | Doc name | Category, Team=Governance |
 | Workflows | Task name, Status | Priority, Team=Governance, Due date |
-| Protocols | Doc name | Category |
-
 ## Relations map
 ```
 Objectives <-> Key Results (dual)

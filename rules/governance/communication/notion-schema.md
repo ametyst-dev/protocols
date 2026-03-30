@@ -85,9 +85,3 @@ Note: Key Results has additional Status options: **Failed** (between In progress
 | Task type | multi_select | Bug, Feature request, Polish |
 | Description | rich_text | — |
 | Past due | formula | "Past Due" or "" |
-
-### Protocols
-| Property | Type | Options |
-|---|---|---|
-| Category | multi_select | Proposal, Customer research, Strategy doc, Planning |
-| Reviewers | people | — |
