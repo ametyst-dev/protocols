@@ -10,9 +10,9 @@ Guide a new team member through a lightweight onboarding that connects their age
 **Important:** This skill must run on **Claude Code** (CLI). The user's teamspace is **General**.
 
 **Prerequisite:** The admin (Patrick) must have already:
-1. Created a Slack app for this member (or shared an existing bot token)
-2. Ensured the member has access to the `ametyst-dev` GitHub org
-3. Populated the `ametyst-dev/protocols` repo with the relevant protocols
+1. Ensured the member has access to the `ametyst-dev` GitHub org
+2. Populated the `ametyst-dev/protocols` repo with the relevant protocols
+3. (Optional) Created a Slack app for this member and shared the bot token
 
 ---
 
@@ -27,23 +27,26 @@ Tell the user: "This is the light setup — Slack + GitHub protocols. No Notion 
 
 ---
 
-### Step 2 — Receive Slack token from admin
+### Step 2 — Check for Slack token
 
 Tell the user:
 
 ```
-Your admin (Patrick) should have sent you a Slack Bot Token (starts with `xoxb-`).
+Do you have a Slack Bot Token (starts with `xoxb-`)?
 
-If you haven't received it yet, ask Patrick to send it to you securely.
-
-Do you have the token?
+Your admin (Patrick) may have sent you one. If you don't have it, no problem — we'll skip Slack setup for now and you can configure it later.
 ```
 
-Use `AskUserQuestion` to wait for the user to provide the token or confirm they have it.
+Use `AskUserQuestion` to wait for the user's response.
+
+- If the user **provides a token** or says **yes** → set `SLACK_ENABLED = true`, continue to Step 3.
+- If the user says **no**, **I don't have one**, or anything indicating they don't have a token → set `SLACK_ENABLED = false`, tell them: "No problem — skipping Slack setup. Everything else will be configured normally. You can add Slack later by getting a bot token from your admin." Then **skip directly to Step 5**.
 
 ---
 
-### Step 3 — Prerequisites & MCP server configuration
+### Step 3 — Prerequisites & MCP server configuration (only if SLACK_ENABLED)
+
+**Skip this step entirely if `SLACK_ENABLED = false`.**
 
 Tell the user:
 
@@ -112,7 +115,9 @@ Use `AskUserQuestion` to wait for confirmation.
 
 ---
 
-### Step 4 — Slack connection verification
+### Step 4 — Slack connection verification (only if SLACK_ENABLED)
+
+**Skip this step entirely if `SLACK_ENABLED = false`.**
 
 Post a test message to #general (channel ID `C0A9L8KDFEW`):
 
@@ -184,7 +189,9 @@ rm -rf /tmp/ametyst-protocols
 
 ### Step 6 — Create communication-routing.md
 
-Create `.claude/rules/communication-routing.md` with this exact content:
+Create `.claude/rules/communication-routing.md`.
+
+**If `SLACK_ENABLED = true`**, use this content:
 
 ```markdown
 # Communication Routing
@@ -206,6 +213,32 @@ All paths are relative to the project root.
 
 ## Note
 This is a light setup — Slack only, no Notion. To add Notion access and additional teamspaces, ask your admin to run the full setup upgrade.
+```
+
+**If `SLACK_ENABLED = false`**, use this content:
+
+```markdown
+# Communication Routing
+
+## Rule
+Before any Slack message, read the relevant protocol files below.
+
+## Routing table
+
+| Context | Protocol files |
+|---|---|
+| #general, #standup, #news | `.claude/rules/general-teamspace-communication/` |
+
+All paths are relative to the project root.
+
+## Loading rules
+- Load `slack-protocol.md` before posting any message
+- Follow message formats exactly — no paraphrasing
+
+## Note
+This is a light setup — no Notion. Slack is not yet configured.
+To add Slack, get a bot token from your admin and configure it in ~/.claude/settings.json.
+To add Notion access and additional teamspaces, ask your admin to run the full setup upgrade.
 ```
 
 Tell the user that communication routing has been configured.
@@ -311,6 +344,8 @@ Tell the user their CLAUDE.md has been generated.
 
 ### Step 9 — Summary + welcome message
 
+**If `SLACK_ENABLED = true`:**
+
 Post a welcome message to #general (channel ID `C0A9L8KDFEW`):
 
 ```
@@ -322,6 +357,8 @@ Setup complete — company context and communication loaded.
 
 Before posting, show the user the message and ask for confirmation.
 
+**If `SLACK_ENABLED = false`:** Skip the Slack welcome message entirely.
+
 Then **dynamically discover** what was installed by scanning the local file system:
 
 1. **Skills** — list all folders in `.claude/skills/`. For each, read the skill file (SKILL.md or the main .md) and extract the `description` from the frontmatter or first paragraph. Build a list of skill name + one-line description.
@@ -329,6 +366,8 @@ Then **dynamically discover** what was installed by scanning the local file syst
 3. **Guides** — list all files in `.claude/guides/` (if it exists). For each, read the title (first `#` heading). Build a list of guide name + one-line description.
 
 Present the full recap to the user:
+
+**If `SLACK_ENABLED = true`:**
 
 ```
 Light setup complete! Here's what was configured:
@@ -345,7 +384,7 @@ Your agent is now connected to the Ametyst ecosystem via Slack.
 What you CAN do:
 - Communicate on Slack channels
 - Access company context (who we are, what we build, competition)
-- Work with Cursor on code tasks
+- Work with Claude Code on code tasks
 - Collaborate with other agents via Slack
 
 Skills installed:
@@ -365,4 +404,31 @@ What you CANNOT do yet (requires full setup):
 - Access Strategy or Governance teamspaces
 
 To upgrade, ask Patrick to run the full setup for you.
+```
+
+**If `SLACK_ENABLED = false`:**
+
+```
+Light setup complete! Here's what was configured:
+
+- Slack: not configured (no token provided — can be added later)
+- Protocols: downloaded from GitHub (ametyst-dev/protocols)
+- Company context: synced to context/company-context/
+- Communication: Slack protocols downloaded (not yet active)
+- Self-context: <Name>.md created
+- CLAUDE.md: generated
+
+What you CAN do:
+- Access company context (who we are, what we build, competition)
+- Work with Claude Code on code tasks
+- Use installed skills and agents locally
+
+What you CANNOT do yet:
+- Communicate on Slack channels (need bot token from admin)
+- Collaborate with other agents via Slack
+- Access Notion databases (requires full setup)
+- Access Strategy or Governance teamspaces
+
+To add Slack: ask Patrick for a bot token, then configure it in ~/.claude/settings.json.
+To upgrade to full access, ask Patrick to run the full setup for you.
 ```
